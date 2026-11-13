@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>さんすうバトル｜学びのミカタ</title>
+<meta name="description" content="先生とのチャットで「わかった！」、モンスターバトルで「できた！」。小学1〜6年生の算数アプリ。">
+<meta name="theme-color" content="#5eead4">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="さんすうバトル">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1c2b2a; --paper:#f0fdfb; --teal:#0e7490; --mint:#5eead4; --sky:#7dd3fc;
+  --accent:#e8590c; --sun:#fbbf24; --line:#cdf0ea; --gray:#57726e; --red:#ef4444; --green:#16a34a;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--paper);height:100%}
+body{font-family:'Zen Maru Gothic','Hiragino Maru Gothic ProN',sans-serif;color:var(--ink);font-weight:700;
+  font-feature-settings:"palt";overscroll-behavior:none;-webkit-user-select:none;user-select:none}
+button{font-family:inherit;font-weight:900;border:none;cursor:pointer;color:inherit}
+.app{max-width:560px;margin:0 auto;min-height:100%;position:relative;padding-bottom:40px}
+.screen{display:none;padding:0 16px;animation:fade .25s ease}
+.screen.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* top bar */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 0 10px;gap:8px}
+.back{background:white;border:2.5px solid var(--line);border-radius:100px;padding:8px 14px;font-size:15px}
+.pill{background:white;border:2.5px solid var(--line);border-radius:100px;padding:7px 14px;font-size:15px;display:flex;align-items:center;gap:6px}
+.pill .star{color:var(--sun)}
+.sound{background:white;border:2.5px solid var(--line);border-radius:50%;width:42px;height:42px;font-size:18px}
+
+/* trial banner */
+.trial{background:#fff7ed;border:2px solid #fed7aa;border-radius:14px;padding:9px 12px;margin:10px 0 0;
+  display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13.5px;color:#9a3412}
+.trial button{background:var(--accent);color:white;border-radius:100px;padding:7px 12px;font-size:13px;flex-shrink:0}
+.trial.hide{display:none}
+
+/* home */
+.hero{background:linear-gradient(150deg,var(--sky),var(--mint));border-radius:26px;padding:22px 18px 20px;margin-top:6px;
+  position:relative;overflow:hidden;display:flex;gap:12px;align-items:center}
+.hero::after{content:'';position:absolute;right:-50px;top:-50px;width:170px;height:170px;border-radius:50%;background:white;opacity:.25}
+.hero h1{font-size:29px;font-weight:900;line-height:1.25;position:relative;z-index:1}
+.hero h1 small{display:block;font-size:13px;color:var(--teal);letter-spacing:.08em;margin-bottom:4px}
+.hero p{font-size:14px;line-height:1.6;margin-top:8px;color:#1c3a3a;position:relative;z-index:1}
+.hero .owl{width:96px;flex-shrink:0;position:relative;z-index:1}
+.h2{font-size:18px;font-weight:900;margin:24px 0 12px}
+.grades{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.grade{background:white;border:3px solid var(--line);border-radius:20px;padding:14px 6px 12px;text-align:center;
+  transition:transform .12s,box-shadow .12s;box-shadow:0 4px 0 var(--line)}
+.grade:active{transform:translateY(3px);box-shadow:0 1px 0 var(--line)}
+.grade b{display:block;font-size:30px;line-height:1;color:var(--gc)}
+.grade span{display:block;font-size:13px;margin-top:4px}
+.grade em{display:block;font-style:normal;font-size:12.5px;color:var(--gray);margin-top:6px}
+.zukan-btn{width:100%;margin-top:14px;background:white;border:3px solid var(--line);border-radius:20px;padding:14px 16px;
+  display:flex;align-items:center;gap:12px;font-size:16px;text-align:left;box-shadow:0 4px 0 var(--line)}
+.zukan-btn .mini{display:flex}
+.zukan-btn .mini svg{width:34px;height:34px;margin-left:-8px}
+.zukan-btn small{display:block;font-size:12.5px;color:var(--gray);font-weight:700}
+.portal-link{display:block;text-align:center;margin-top:26px;font-size:13px;color:var(--teal)}
+
+/* map */
+.map-head{display:flex;align-items:center;gap:12px;margin:4px 0 6px}
+.map-head h2{font-size:22px;font-weight:900}
+.map-head p{font-size:13px;color:var(--gray)}
+.path{position:relative;padding:10px 0 20px}
+.stage{display:flex;align-items:center;gap:14px;background:white;border:3px solid var(--line);border-radius:22px;
+  padding:12px 14px;margin:12px 0;width:88%;box-shadow:0 4px 0 var(--line);text-align:left;transition:transform .12s}
+.stage:nth-child(even){margin-left:12%}
+.stage:active{transform:translateY(3px)}
+.stage.lock{opacity:.5;filter:grayscale(.8)}
+.stage .mon{width:58px;height:58px;flex-shrink:0}
+.stage .no{font-size:12px;color:var(--gray)}
+.stage .ttl{font-size:16.5px;font-weight:900;line-height:1.35}
+.stage .stars{font-size:16px;color:#d6dbe0;letter-spacing:2px;margin-top:2px}
+.stage .stars .on{color:var(--sun)}
+
+/* chat lesson */
+.lesson-title{font-size:13px;color:var(--teal);margin:4px 0 2px}
+.lesson-h{font-size:21px;font-weight:900;margin-bottom:12px}
+.chat{background:white;border-radius:24px;padding:16px 12px;border:3px solid var(--line);min-height:320px}
+.row{display:flex;gap:8px;align-items:flex-end;margin-bottom:12px;animation:pop .3s ease}
+.row.kid{flex-direction:row-reverse}
+@keyframes pop{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:none}}
+.face{width:42px;height:42px;flex-shrink:0;border-radius:50%;overflow:hidden}
+.face.kidf{background:#e0f2fe;display:flex;align-items:center;justify-content:center;font-size:15px;color:#0284c7}
+.bub{font-size:17px;line-height:1.65;padding:11px 15px;border-radius:20px;max-width:82%}
+.row.owlr .bub{background:#f1f5f9;border-bottom-left-radius:6px}
+.row.kid .bub{background:var(--teal);color:white;border-bottom-right-radius:6px}
+.bub .em{color:var(--accent)}
+.row.kid .bub .em{color:#fde68a}
+.bub .big{font-size:22px;letter-spacing:.04em}
+.next{width:100%;margin-top:14px;background:var(--accent);color:white;border-radius:100px;padding:16px;font-size:18px;
+  box-shadow:0 5px 0 #b8460a}
+.next:active{transform:translateY(3px);box-shadow:0 2px 0 #b8460a}
+.next.go{background:var(--green);box-shadow:0 5px 0 #0f7a35}
+.skip{display:block;margin:12px auto 0;background:none;font-size:14px;color:var(--gray);text-decoration:underline}
+
+/* battle */
+.arena{background:linear-gradient(180deg,#e0f7ff,#f0fdfb);border:3px solid var(--line);border-radius:26px;padding:12px 14px 14px;text-align:center;position:relative;overflow:hidden}
+.bar-row{display:flex;justify-content:space-between;align-items:center;font-size:14px}
+.hearts{font-size:20px;letter-spacing:2px}
+.hp{height:14px;background:#e2e8f0;border-radius:100px;overflow:hidden;margin:8px 0 0}
+.hp i{display:block;height:100%;background:linear-gradient(90deg,#f87171,#fb923c);border-radius:100px;transition:width .4s}
+.monster{width:150px;height:150px;margin:10px auto 0;transition:transform .2s}
+.monster.hit{animation:hit .4s}
+.monster.atk{animation:atk .4s}
+@keyframes hit{0%,100%{transform:none}20%{transform:translateX(-10px) rotate(-6deg)}50%{transform:translateX(10px) rotate(5deg);filter:brightness(1.8)}}
+@keyframes atk{0%,100%{transform:none}40%{transform:scale(1.18) translateY(12px)}}
+.monster.gone{animation:gone .6s forwards}
+@keyframes gone{to{transform:scale(0) rotate(200deg);opacity:0}}
+.mname{font-size:14px;color:var(--gray);margin-top:2px}
+.q{background:white;border-radius:20px;padding:16px 10px;margin-top:12px;border:3px solid var(--line);min-height:84px;
+  display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px}
+.q .qs{font-size:14px;color:var(--gray);line-height:1.5}
+.q .qm{font-size:30px;font-weight:900;line-height:1.35;display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center}
+.q .qm.sm{font-size:19px;line-height:1.6}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.opt{background:white;border:3px solid var(--line);border-radius:18px;padding:14px 6px;font-size:24px;min-height:72px;
+  box-shadow:0 5px 0 var(--line);display:flex;align-items:center;justify-content:center;gap:4px;transition:transform .1s}
+.opt.sm{font-size:18px}
+.opt:active{transform:translateY(3px);box-shadow:0 2px 0 var(--line)}
+.opt.ok{background:#dcfce7;border-color:var(--green);box-shadow:0 5px 0 var(--green)}
+.opt.ng{background:#fee2e2;border-color:var(--red);box-shadow:0 5px 0 var(--red)}
+.opt:disabled{cursor:default}
+.fb{margin-top:12px;border-radius:18px;padding:12px 14px;font-size:15.5px;line-height:1.65;text-align:left;display:none}
+.fb.show{display:block;animation:pop .25s}
+.fb.good{background:#dcfce7;color:#14532d}
+.fb.bad{background:#fff1f2;color:#9f1239}
+.fb .next{margin-top:10px;padding:13px;font-size:16px}
+.pow{position:absolute;left:50%;top:38%;font-size:40px;font-weight:900;color:var(--accent);transform:translate(-50%,-50%);
+  pointer-events:none;animation:powup .7s forwards;text-shadow:0 2px 0 white}
+@keyframes powup{0%{opacity:0;transform:translate(-50%,-30%) scale(.5)}30%{opacity:1;transform:translate(-50%,-50%) scale(1.2)}100%{opacity:0;transform:translate(-50%,-90%) scale(1)}}
+
+/* fraction */
+.fr{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;line-height:1;margin:0 2px}
+.fr>span{display:block;padding:0 3px}
+.fr>span:first-child{border-bottom:2.5px solid currentColor;padding-bottom:3px}
+.fr>span:last-child{padding-top:3px}
+.q .qm .fr{font-size:26px}
+.opt .fr{font-size:20px}
+
+/* result */
+.result{text-align:center;padding-top:20px}
+.result h2{font-size:30px;font-weight:900;margin-top:8px}
+.bigstars{font-size:54px;letter-spacing:6px;margin:10px 0;color:#d6dbe0}
+.bigstars span{display:inline-block}
+.bigstars .on{color:var(--sun);animation:starin .5s backwards}
+@keyframes starin{from{transform:scale(0) rotate(-90deg)}to{transform:none}}
+.newfriend{background:white;border:3px solid var(--sun);border-radius:24px;padding:16px;margin:14px 0;display:flex;align-items:center;gap:12px;text-align:left}
+.newfriend svg{width:80px;height:80px;flex-shrink:0}
+.newfriend b{font-size:18px;display:block}
+.newfriend small{font-size:13.5px;color:var(--gray);line-height:1.6;display:block;margin-top:2px}
+.btn2{width:100%;margin-top:10px;background:white;border:3px solid var(--line);border-radius:100px;padding:14px;font-size:16px;box-shadow:0 4px 0 var(--line)}
+.confetti{position:fixed;top:-20px;width:10px;height:14px;z-index:50;pointer-events:none;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
+
+/* zukan */
+.zgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.zc{background:white;border:3px solid var(--line);border-radius:18px;padding:10px 4px;text-align:center;font-size:12px;position:relative}
+.zc svg{width:70px;height:70px}
+.zc.no svg{filter:brightness(0) opacity(.18)}
+.zc.shiny{border-color:var(--sun);background:linear-gradient(160deg,#fffbeb,#fff)}
+.zc.shiny::after{content:'★';position:absolute;top:4px;right:8px;color:var(--sun);font-size:15px}
+.zc .zn{display:block;margin-top:2px;line-height:1.4}
+.ztip{font-size:13.5px;color:var(--gray);line-height:1.7;margin-bottom:12px}
+
+/* overlay */
+.ov{position:fixed;inset:0;background:rgba(15,40,40,.55);z-index:100;display:none;align-items:center;justify-content:center;padding:16px}
+.ov.on{display:flex}
+.ovbox{background:white;border-radius:26px;padding:24px 20px;max-width:400px;width:100%;text-align:center}
+.ovbox h3{font-size:21px;font-weight:900;margin:8px 0 8px;line-height:1.4}
+.ovbox p{font-size:14.5px;line-height:1.75;color:#44403c;font-weight:500}
+.ovbox .price{font-size:32px;font-weight:900;margin:10px 0 2px}
+.ovbox .price small{font-size:14px}
+.ovbox .note{font-size:12.5px;color:var(--gray);margin-top:6px}
+.ovbox .next{margin-top:14px}
+.ovbox .owl{width:80px;margin:0 auto}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div id="trial" class="trial hide"><span id="trialText"></span><button onclick="openBuy(false)">購入する</button></div>
+
+  <!-- HOME -->
+  <section class="screen on" id="sHome">
+    <div class="topbar">
+      <a class="back" href="https://manabino-mikata.com/portal/" style="text-decoration:none;color:inherit">← 学びのミカタ</a>
+      <div style="display:flex;gap:8px;align-items:center">
+        <div class="pill"><span class="star">★</span><span id="starTotal">0</span></div>
+        <button class="sound" id="soundBtn" onclick="toggleSound()" aria-label="おと">🔊</button>
+      </div>
+    </div>
+    <div class="hero">
+      <div>
+        <h1><small>学びのミカタ 小学生</small>さんすう<br>バトル！</h1>
+        <p>ホー先生のおはなしで「わかった！」<br>モンスターをたおして「できた！」</p>
+      </div>
+      <div class="owl" id="heroOwl"></div>
+    </div>
+    <div class="h2">なんねんせい？</div>
+    <div class="grades" id="grades"></div>
+    <button class="zukan-btn" onclick="showZukan()">
+      <span class="mini" id="zMini"></span>
+      <span>なかまずかん<small id="zCount"></small></span>
+    </button>
+  </section>
+
+  <!-- MAP -->
+  <section class="screen" id="sMap">
+    <div class="topbar">
+      <button class="back" onclick="go('sHome')">← もどる</button>
+      <div class="pill"><span class="star">★</span><span id="gradeStars">0</span></div>
+    </div>
+    <div class="map-head"><div><h2 id="mapTitle"></h2><p>ステージをえらんでね。クリアすると つぎがひらくよ</p></div></div>
+    <div class="path" id="path"></div>
+  </section>
+
+  <!-- LESSON -->
+  <section class="screen" id="sLesson">
+    <div class="topbar">
+      <button class="back" onclick="openMap(cur.g)">← もどる</button>
+    </div>
+    <div class="lesson-title" id="lTitle"></div>
+    <div class="lesson-h" id="lH"></div>
+    <div class="chat" id="chat"></div>
+    <button class="next" id="lNext" onclick="nextLine()">つぎへ ▶</button>
+    <button class="skip" id="lSkip" onclick="startBattle()">おはなしをとばしてバトルへ</button>
+  </section>
+
+  <!-- BATTLE -->
+  <section class="screen" id="sBattle">
+    <div class="topbar">
+      <button class="back" onclick="if(confirmQuit())openMap(cur.g)">← にげる</button>
+      <div class="pill" id="qCount"></div>
+    </div>
+    <div class="arena" id="arena">
+      <div class="bar-row"><span class="hearts" id="hearts"></span><span id="bName"></span></div>
+      <div class="hp"><i id="hpBar" style="width:100%"></i></div>
+      <div class="monster" id="monster"></div>
+    </div>
+    <div class="q" id="q"></div>
+    <div class="opts" id="opts"></div>
+    <div class="fb" id="fb"></div>
+  </section>
+
+  <!-- RESULT -->
+  <section class="screen" id="sResult">
+    <div class="result" id="result"></div>
+  </section>
+
+  <!-- ZUKAN -->
+  <section class="screen" id="sZukan">
+    <div class="topbar">
+      <button class="back" onclick="go('sHome')">← もどる</button>
+      <div class="pill" id="zPill"></div>
+    </div>
+    <div class="h2" style="margin-top:4px">なかまずかん</div>
+    <p class="ztip">モンスターをたおすと なかまになるよ。ノーミス（★3つ）でクリアすると、キラキラのすがたになるよ！</p>
+    <div class="zgrid" id="zgrid"></div>
+  </section>
+</div>
+
+<!-- 購入オーバーレイ -->
+<div class="ov" id="ovBuy">
+  <div class="ovbox">
+    <div class="owl" id="ovOwl"></div>
+    <h3 id="ovH"></h3>
+    <p id="ovP"></p>
+    <div class="price">¥980<small>（税込）</small></div>
+    <div class="note">1回のお支払いで、1〜6年生の全ステージが使えます（月額料金はかかりません）</div>
+    <button class="next" onclick="goBuy()">購入する</button>
+    <button class="skip" id="ovClose" onclick="closeBuy()">あとで</button>
+    <button class="skip" onclick="restoreHelp()">購入済みの方はこちら</button>
+  </div>
+</div>
+
+<script>
+/* ===================== 設定 ===================== */
+const APP_ID = 'sansu';
+// ▼ Stripeで「さんすうバトル」の決済リンクを作ったら、ここを差し替えてください
+const STRIPE_URL = 'https://buy.stripe.com/TODO_sansu';
+// ▼ Stripeの「支払い後のリダイレクト先」は https://japrican.github.io/sansu/?paid=1 にしてください
+const TRIAL_DAYS = 7;
+const CONTACT = 'studypartnerforkids@gmail.com';
+
+/* ===================== 体験版・購入 ===================== */
+function ls(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v)}catch(e){return null}}
+(function handlePaid(){
+  const p=new URLSearchParams(location.search);
+  if(p.get('paid')==='1'){ls('app_unlocked_'+APP_ID,'1');history.replaceState(null,'',location.pathname);window.__justPaid=true}
+})();
+function isUnlocked(){return ls('app_unlocked_'+APP_ID)==='1'}
+function trialStart(){
+  let t=parseInt(ls('app_trial_start_'+APP_ID),10);
+  if(!t){t=Date.now();ls('app_trial_start_'+APP_ID,String(t))}
+  return t;
+}
+function daysLeft(){return Math.max(0,Math.ceil(TRIAL_DAYS-(Date.now()-trialStart())/86400000))}
+function trialOver(){return !isUnlocked()&&daysLeft()<=0}
+function showTrialBanner(){
+  const el=document.getElementById('trial');
+  if(isUnlocked()){el.classList.add('hide');return}
+  const d=daysLeft();
+  document.getElementById('trialText').textContent=d>0?`🎁 無料体験中：のこり${d}日`:'無料体験がおわりました';
+  el.classList.remove('hide');
+}
+function openBuy(expired){
+  document.getElementById('ovH').textContent=expired?'無料体験はおわりました':'ずっと遊べるようにする';
+  document.getElementById('ovP').textContent=expired
+    ?'7日間あそんでくれてありがとう！ つづきは、おうちの人といっしょに購入してね。進みぐあいやなかまは、そのまま残っています。'
+    :'購入すると、体験期間が終わっても、1〜6年生の全ステージでずっと遊べます。';
+  document.getElementById('ovClose').style.display=expired?'none':'block';
+  document.getElementById('ovBuy').classList.add('on');
+}
+function closeBuy(){document.getElementById('ovBuy').classList.remove('on')}
+function goBuy(){location.href=STRIPE_URL}
+function restoreHelp(){
+  alertBox('購入済みの方へ',`購入したときと同じ端末・ブラウザで開いてください。別の端末で使いたいときや、うまく開けないときは、購入時のメールを添えて ${CONTACT} までご連絡ください。`);
+}
+function alertBox(h,p){
+  document.getElementById('ovH').textContent=h;document.getElementById('ovP').textContent=p;
+  document.getElementById('ovClose').style.display='block';
+  document.getElementById('ovBuy').classList.add('on');
+}
+function guard(){if(trialOver()){openBuy(true);return false}return true}
+
+/* ===================== 音 ===================== */
+let soundOn=ls('sansu_sound')!=='0',actx=null;
+function toggleSound(){soundOn=!soundOn;ls('sansu_sound',soundOn?'1':'0');document.getElementById('soundBtn').textContent=soundOn?'🔊':'🔈'}
+function beep(type){
+  if(!soundOn)return;
+  try{
+    actx=actx||new (window.AudioContext||window.webkitAudioContext)();
+    const seq={ok:[[660,.08],[880,.12]],ng:[[260,.18]],win:[[523,.1],[659,.1],[784,.1],[1047,.25]],tap:[[500,.04]]}[type];
+    let t=actx.currentTime;
+    seq.forEach(([f,d])=>{const o=actx.createOscillator(),g=actx.createGain();o.type=type==='ng'?'sawtooth':'triangle';o.frequency.value=f;
+      g.gain.setValueAtTime(.15,t);g.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(g);g.connect(actx.destination);o.start(t);o.stop(t+d);t+=d});
+  }catch(e){}
+}
+
+/* ===================== 数字ヘルパー ===================== */
+const R=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const gcd=(a,b)=>b?gcd(b,a%b):Math.abs(a);
+const lcm=(a,b)=>a/gcd(a,b)*b;
+const fr=(n,d)=>{const g=gcd(n,d);return (d/g===1)?String(n/g):`${n/g}/${d/g}`};   // 約分した分数の文字列
+const dec=t=>{const s=(t/10).toFixed(1);return s.endsWith('.0')?s.slice(0,-2):s};      // 10分の1単位の整数 → 小数文字列
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+// 分数「a/b」を縦書きに
+function fmt(s){return String(s).replace(/(\d+)\/(\d+)/g,'<span class="fr"><span>$1</span><span>$2</span></span>')}
+// 選択肢：正解 + まちがい候補 から4つ
+function opts(ans,cands,fill){
+  const set=[String(ans)];
+  for(const c of cands){const s=String(c);if(!set.includes(s)&&s!==''&&!/^-|NaN|undefined/.test(s))set.push(s);if(set.length===4)break}
+  let guard=0;while(set.length<4&&guard++<200){const s=String(fill());if(!set.includes(s)&&!/^-|NaN/.test(s))set.push(s)}
+  return shuffle(set);
+}
+const near=(a,r=3)=>()=>Math.max(0,a+pick([-1,1])*R(1,r));
+
+/* ===================== ステージ（単元） ===================== */
+const O='o',K='k'; // O=ホー先生 K=そら
+const UNITS=[
+/* ---------- 1年 ---------- */
+{g:1,t:'10までの たしざん',m:'タシタマ',chat:[
+ [K,'せんせい、<span class="em">たしざん</span>って なあに？'],
+ [O,'「あわせて いくつ？」を かぞえることだよ。りんごが <span class="big">3こ</span>、あと <span class="big">2こ</span> もらったら？'],
+ [K,'1、2、3…4、5！ <span class="em">5こ</span>だ！'],
+ [O,'そのとおり！ <span class="big">3 + 2 = 5</span> と かくよ。ゆびを つかっても いいからね。']],
+ gen(){const a=R(1,9),b=R(1,10-a),s=a+b;return{q:`${a} + ${b} = ？`,a:s,o:opts(s,[s+1,s-1,s+2],near(s)),x:`${a}と ${b}を あわせると ${s}だよ。`}}},
+{g:1,t:'10までの ひきざん',m:'ヒキゴン',chat:[
+ [O,'こんどは「<span class="em">のこりは いくつ？</span>」だよ。'],
+ [O,'あめが <span class="big">7こ</span>。<span class="big">3こ</span> たべたら、のこりは？'],
+ [K,'7から 3つ へらすと… <span class="em">4こ</span>！'],
+ [O,'だいせいかい！ <span class="big">7 − 3 = 4</span>。へらすときは「−（ひく）」を つかうよ。']],
+ gen(){const a=R(2,10),b=R(1,a-1),s=a-b;return{q:`${a} − ${b} = ？`,a:s,o:opts(s,[s+1,s-1,a+b],near(s)),x:`${a}から ${b}を とると ${s}だよ。`}}},
+{g:1,t:'くりあがりの たしざん',m:'ジュッコロン',chat:[
+ [K,'<span class="big">8 + 5</span> って、ゆびが たりないよ〜'],
+ [O,'そんなときは「<span class="em">10の まとまり</span>」を つくるんだ。8は あと いくつで 10？'],
+ [K,'あと <span class="em">2</span>！'],
+ [O,'5を <span class="big">2と3</span> に わけて、8に 2を あげると 10。のこりの 3と あわせて？'],
+ [K,'<span class="em">13</span>だ！ 10を つくると かんたん！']],
+ gen(){const a=R(2,9),b=R(11-a,9),s=a+b,n=10-a;return{q:`${a} + ${b} = ？`,a:s,o:opts(s,[s-10,s+1,s-1,s+10],near(s)),x:`${a}は あと ${n}で 10。${b}を ${n}と ${b-n}に わけて、10と ${b-n}で ${s}だよ。`}}},
+{g:1,t:'くりさがりの ひきざん',m:'カリルン',chat:[
+ [K,'<span class="big">12 − 5</span> は？ 2から 5は ひけないよ…'],
+ [O,'12を「<span class="em">10と 2</span>」に わけよう。10から 5を ひくと？'],
+ [K,'<span class="em">5</span>！'],
+ [O,'その 5と、のこしておいた 2を あわせると？'],
+ [K,'<span class="em">7</span>！ 10から ひけば いいんだね！']],
+ gen(){const a=R(11,18),o=a-10,b=R(o+1,9),s=a-b;return{q:`${a} − ${b} = ？`,a:s,o:opts(s,[s+1,s-1,b-o,s+10],near(s)),x:`${a}を 10と ${o}に わけて、10 − ${b} = ${10-b}。${10-b}と ${o}で ${s}だよ。`}}},
+/* ---------- 2年 ---------- */
+{g:2,t:'2けたの たしざん',m:'ヒッサンダー',chat:[
+ [O,'<span class="big">27 + 35</span> は、<span class="em">一のくらい</span>と <span class="em">十のくらい</span>に わけて けいさんするよ。'],
+ [K,'一のくらいは 7 + 5 = 12…'],
+ [O,'12の「1」は 十のくらいへ <span class="em">くりあがる</span>んだ。十のくらいは 2 + 3 + 1 で？'],
+ [K,'6！ だから <span class="em">62</span>！'],
+ [O,'かんぺき！ くりあがりの「1」を わすれないのが コツだよ。']],
+ gen(){const a=R(11,79),b=R(11,99-a),s=a+b;return{q:`${a} + ${b} = ？`,a:s,o:opts(s,[s-10,s+10,s+1,s-1],near(s,5)),x:`一のくらいから じゅんに たそう。こたえは ${s}だよ。`}}},
+{g:2,t:'2けたの ひきざん',m:'クリサガール',chat:[
+ [K,'<span class="big">52 − 17</span> は、一のくらいの 2から 7が ひけない…'],
+ [O,'十のくらいから <span class="em">10を かりて</span>くるよ。2が 12に なるね。'],
+ [K,'12 − 7 = 5。十のくらいは 5が 4に へって、4 − 1 = 3。'],
+ [O,'だから？'],
+ [K,'<span class="em">35</span>！']],
+ gen(){const a=R(21,99),b=R(11,a-1),s=a-b;const noBorrow=Math.abs(Math.floor(a/10)-Math.floor(b/10))*10+Math.abs(a%10-b%10);return{q:`${a} − ${b} = ？`,a:s,o:opts(s,[noBorrow,s+10,s-10,s+1],near(s,5)),x:`ひけないときは 十のくらいから 10を かりよう。こたえは ${s}だよ。`}}},
+{g:2,t:'九九（2〜5のだん）',m:'クククック',chat:[
+ [O,'かけざんは「<span class="em">おなじ かずが なんこ分</span>」だよ。'],
+ [O,'3こ入りの おかしが 4ふくろ。ぜんぶで？'],
+ [K,'3 + 3 + 3 + 3 で… 12！'],
+ [O,'それを <span class="big">3 × 4 = 12</span> と かくよ。九九を おぼえると いっしゅんで わかるんだ。']],
+ gen(){const a=R(2,5),b=R(1,9),s=a*b;return{q:`${a} × ${b} = ？`,a:s,o:opts(s,[s+a,s-a,a+b,s+1],near(s,4)),x:`${a}が ${b}こ分で ${s}。「${a}の だん」を となえてみよう。`}}},
+{g:2,t:'九九（6〜9のだん）',m:'ハックック',chat:[
+ [K,'7のだんが にがて…'],
+ [O,'ひみつを おしえよう。<span class="big">7 × 6</span> は、<span class="em">6 × 7</span> と おなじ こたえだよ。'],
+ [K,'えっ、ひっくりかえしても いいの？'],
+ [O,'かけざんは じゅんばんを かえても こたえが おなじ。だから 7のだんは、もう ほとんど しってるんだ！'],
+ [K,'6 × 7 = <span class="em">42</span>！ ほんとだ！']],
+ gen(){const a=R(6,9),b=R(1,9),s=a*b;return{q:`${a} × ${b} = ？`,a:s,o:opts(s,[s+a,s-a,a*(b+1),s+1],near(s,5)),x:`${a} × ${b} = ${s}。わからないときは ${b} × ${a} で かんがえてもいいよ。`}}},
+/* ---------- 3年 ---------- */
+{g:3,t:'わり算',m:'ワケワケ',chat:[
+ [O,'わり算は「<span class="em">同じ数ずつ 分ける</span>」計算だよ。'],
+ [O,'12このクッキーを 3人で同じ数ずつ分けると？'],
+ [K,'えーと… 3 × <span class="em">□</span> = 12 になる数をさがせばいいのかな？'],
+ [O,'すごい！ そのとおり。<span class="big">12 ÷ 3 = 4</span>。わり算は<span class="em">九九を逆に使う</span>んだ。']],
+ gen(){const b=R(2,9),s=R(1,9),a=b*s;return{q:`${a} ÷ ${b} = ？`,a:s,o:opts(s,[s+1,s-1,a-b,b],near(s,3)),x:`${b} × ${s} = ${a} だから、${a} ÷ ${b} = ${s}。`}}},
+{g:3,t:'あまりのあるわり算',m:'アマリン',chat:[
+ [K,'<span class="big">17 ÷ 5</span> は、5のだんに 17がないよ。'],
+ [O,'17をこえない、いちばん近い5のだんは？'],
+ [K,'5 × 3 = 15！'],
+ [O,'17 − 15 = 2 が<span class="em">あまり</span>。だから「<span class="em">3あまり2</span>」。'],
+ [O,'ルールは1つ。<span class="em">あまりは わる数より小さい</span>こと！']],
+ gen(){const b=R(2,9),s=R(1,9),r=R(1,b-1),a=b*s+r;const A=`${s} あまり ${r}`;
+  return{q:`${a} ÷ ${b} = ？`,a:A,small:true,o:opts(A,[`${s+1} あまり ${r}`,s>1?`${s-1} あまり ${r+b}`:`${s} あまり ${r+1}`,`${s} あまり ${r===1?2:r-1}`],()=>`${R(1,9)} あまり ${R(1,b-1)}`),x:`${b} × ${s} = ${b*s}。${a} − ${b*s} = ${r} があまり。あまり${r}は わる数${b}より小さいね。`}}},
+{g:3,t:'2けた×1けたのかけ算',m:'カケルンバ',chat:[
+ [O,'<span class="big">23 × 4</span> は、23を<span class="em">20と3</span>に分けて考えよう。'],
+ [K,'20 × 4 = 80、3 × 4 = 12…'],
+ [O,'あわせると？'],
+ [K,'80 + 12 = <span class="em">92</span>！ 分けると九九でできる！']],
+ gen(){const a=R(11,49),b=R(2,9),s=a*b,t=Math.floor(a/10)*10,o=a%10;return{q:`${a} × ${b} = ？`,a:s,o:opts(s,[t*b+o,s+b,s-10,s+10],near(s,8)),x:`${t} × ${b} = ${t*b}、${o} × ${b} = ${o*b}。あわせて ${s}。`}}},
+{g:3,t:'3けたのたし算・ひき算',m:'ミケタロウ',chat:[
+ [O,'3けたになっても、やり方は2けたと同じだよ。'],
+ [K,'一の位、十の位、百の位の順に計算するんだよね。'],
+ [O,'そう！ くり上がり・くり下がりは<span class="em">となりの位</span>に知らせるだけ。'],
+ [K,'位をそろえれば こわくない！']],
+ gen(){if(Math.random()<.5){const a=R(101,898),b=R(101,999-a),s=a+b;return{q:`${a} + ${b} = ？`,a:s,o:opts(s,[s-10,s+10,s-100,s+1],near(s,9)),x:`一の位からじゅんに計算して ${s}。`}}
+  const a=R(201,999),b=R(101,a-1),s=a-b;return{q:`${a} − ${b} = ？`,a:s,o:opts(s,[s+10,s-10,s+100,s+1],near(s,9)),x:`一の位からじゅんに計算して ${s}。`}}},
+/* ---------- 4年 ---------- */
+{g:4,t:'2けた÷1けたのわり算',m:'ワリザン王',chat:[
+ [O,'<span class="big">84 ÷ 3</span> は、<span class="em">十の位から</span>わっていくよ。'],
+ [K,'8 ÷ 3 = 2 あまり 2…'],
+ [O,'あまりの2は「20」のこと。一の位の4とあわせて24。24 ÷ 3 は？'],
+ [K,'8！ だから<span class="em">28</span>！'],
+ [O,'「たてる→かける→ひく→おろす」のくり返しだよ。']],
+ gen(){const b=R(2,9),s=R(11,Math.floor(99/b)),a=b*s;return{q:`${a} ÷ ${b} = ？`,a:s,o:opts(s,[s+1,s-1,s+10,s-10],near(s,4)),x:`${b} × ${s} = ${a} だから、${a} ÷ ${b} = ${s}。`}}},
+{g:4,t:'小数のたし算・ひき算',m:'テンテン',chat:[
+ [K,'<span class="big">2.5 + 1.8</span> って、どう計算するの？'],
+ [O,'大事なのは<span class="em">小数点をそろえる</span>こと。0.1が何こ分か考えてもいいよ。'],
+ [K,'2.5は0.1が25こ、1.8は18こ。あわせて43こ…'],
+ [O,'つまり？'],
+ [K,'<span class="em">4.3</span>！']],
+ gen(){let x=R(11,99),y=R(1,99);const plus=Math.random()<.5||x===y;if(!plus&&y>x)[x,y]=[y,x];const t=plus?x+y:x-y,s=dec(t);
+  return{q:`${dec(x)} ${plus?'+':'−'} ${dec(y)} = ？`,a:s,o:opts(s,[dec(t+10),dec(t>10?t-10:t+1),dec(t*10),dec(t+1)],()=>dec(Math.max(1,t+pick([-1,1])*R(1,15)))),x:`小数点をそろえて計算すると ${s}。`}}},
+{g:4,t:'計算のじゅんじょ',m:'ジュンバンダ',chat:[
+ [K,'<span class="big">3 + 4 × 2</span> は、7 × 2 = 14？'],
+ [O,'ざんねん！ ルールがあるんだ。<span class="em">× と ÷ は、+ と − より先</span>に計算するよ。'],
+ [K,'じゃあ 4 × 2 = 8 が先で、3 + 8 = <span class="em">11</span>！'],
+ [O,'正解！ それから<span class="em">（ ）があれば、いちばん先</span>だよ。']],
+ gen(){const a=R(2,9),b=R(2,9),c=R(2,9);const t=R(0,2);let q,s,w;
+  if(t===0){q=`${a} + ${b} × ${c}`;s=a+b*c;w=(a+b)*c}
+  else if(t===1){q=`(${a} + ${b}) × ${c}`;s=(a+b)*c;w=a+b*c}
+  else{const big=b*c+R(1,20);q=`${big} − ${b} × ${c}`;s=big-b*c;w=(big-b)*c}
+  return{q:`${q} = ？`,a:s,o:opts(s,[w,s+1,s-1,s+c],near(s,5)),x:t===1?`（ ）の中を先に計算して ${a+b} × ${c} = ${s}。`:`× を先に計算するよ。${b} × ${c} = ${b*c}。こたえは ${s}。`}}},
+{g:4,t:'がい数（四捨五入）',m:'ゴシャゴシャ',chat:[
+ [O,'<span class="em">四捨五入</span>は、0〜4は切りすて、5〜9は切り上げるルールだよ。'],
+ [K,'3480を<span class="em">百の位までのがい数</span>にすると？'],
+ [O,'百の位の1つ下、<span class="em">十の位</span>を見るんだ。8だから？'],
+ [K,'切り上げて <span class="em">3500</span>！'],
+ [O,'「どの位を見るか」がいちばんのポイントだよ。']],
+ gen(){let n;do{n=R(1001,9999)}while(n%100===0);const s=Math.round(n/100)*100,fl=Math.floor(n/100)*100,ce=Math.ceil(n/100)*100,th=Math.round(n/1000)*1000,tens=Math.floor(n/10)%10;
+  return{q:`${n} を四捨五入して<br>百の位までのがい数にすると？`,sm:true,a:s,o:opts(s,[s===fl?ce:fl,th,Math.round(n/10)*10,s+100],near(s,3)),x:`十の位は ${tens}。${tens>=5?'5以上なので切り上げ':'4以下なので切りすて'}て ${s}。`}}},
+/* ---------- 5年 ---------- */
+{g:5,t:'小数のかけ算',m:'ショースウ',chat:[
+ [K,'<span class="big">2.4 × 3</span> は？'],
+ [O,'小数点をいったん忘れて、<span class="em">24 × 3</span>を計算しよう。'],
+ [K,'72！'],
+ [O,'2.4は小数点の下が1けた。だから答えも<span class="em">下から1けた</span>のところに点を打つよ。'],
+ [K,'<span class="em">7.2</span>だ！']],
+ gen(){const x=R(11,99),k=R(2,9),t=x*k,s=dec(t);return{q:`${dec(x)} × ${k} = ？`,a:s,o:opts(s,[String(t),(t/100).toFixed(2),dec(t+k),dec(t-10)],()=>dec(t+pick([-1,1])*R(1,20))),x:`${x} × ${k} = ${t}。小数点を下から1けたのところに打って ${s}。`}}},
+{g:5,t:'分数のたし算（通分）',m:'ツウブン',chat:[
+ [K,'<span class="big">1/2 + 1/3</span> は、2/5 ？'],
+ [O,'よくあるまちがい！ 分母がちがう分数は、そのままたせないんだ。'],
+ [O,'<span class="em">分母をそろえる（通分）</span>よ。2と3の両方でわれる6にしよう。'],
+ [K,'1/2 = 3/6、1/3 = 2/6。あわせて <span class="em">5/6</span>！'],
+ [O,'完ぺき！ 答えは約分できるときは約分しようね。']],
+ gen(){let d1,d2;do{d1=R(2,6);d2=R(2,6)}while(d1===d2);const n1=R(1,d1-1),n2=R(1,d2-1);const s=fr(n1*d2+n2*d1,d1*d2),L=lcm(d1,d2);
+  return{q:`${n1}/${d1} + ${n2}/${d2} = ？`,a:s,o:opts(s,[fr(n1+n2,d1+d2),fr(n1+n2,L),fr(n1*d2+n2*d1+1,d1*d2),fr(n1*n2,d1*d2)],()=>fr(R(1,12),R(2,12))),x:`分母を${L}にそろえると、${n1*L/d1}/${L} + ${n2*L/d2}/${L} = ${(n1*L/d1)+(n2*L/d2)}/${L}${fr((n1*L/d1)+(n2*L/d2),L)!==`${(n1*L/d1)+(n2*L/d2)}/${L}`?`。約分して ${s}`:''}。`}}},
+{g:5,t:'平均',m:'ナラスン',chat:[
+ [O,'<span class="em">平均</span>は「でこぼこを、ならして同じにしたら いくつ？」だよ。'],
+ [K,'テストが 70点、80点、90点だったら？'],
+ [O,'<span class="em">ぜんぶたして、個数でわる</span>んだ。'],
+ [K,'240 ÷ 3 = <span class="em">80点</span>！'],
+ [O,'平均 = 合計 ÷ 個数。これだけおぼえればOK！']],
+ gen(){const c=R(3,5),m=R(4,20);let v=[];for(let i=0;i<c-1;i++)v.push(Math.max(1,m+R(-4,4)));const last=m*c-v.reduce((a,b)=>a+b,0);if(last<1)return this.gen();v.push(last);v=shuffle(v);const sum=m*c;
+  return{q:`${v.join('、')} の平均は？`,sm:true,a:m,o:opts(m,[sum,m+1,m-1,Math.round(sum/(c+1))],near(m,3)),x:`合計は ${sum}。${sum} ÷ ${c} = ${m}。`}}},
+{g:5,t:'最小公倍数',m:'バイスウ',chat:[
+ [K,'<span class="em">最小公倍数</span>って、むずかしそうな名前…'],
+ [O,'4と6でいこう。4の倍数は 4, 8, <span class="em">12</span>, 16…  6の倍数は 6, <span class="em">12</span>, 18…'],
+ [K,'両方に出てくる いちばん小さい数は<span class="em">12</span>！'],
+ [O,'それが最小公倍数。大きい方の倍数を順に見て、小さい方でわれるか調べると早いよ。']],
+ gen(){let a,b,L;do{a=R(2,12);b=R(2,12);L=lcm(a,b)}while(a===b||L>72||L===Math.max(a,b)&&Math.random()<.6);
+  return{q:`${a} と ${b} の<br>最小公倍数は？`,sm:true,a:L,o:opts(L,[a*b,gcd(a,b),L*2,L+Math.min(a,b)],near(L,6)),x:`${Math.max(a,b)}の倍数を順に見ていくと、${Math.min(a,b)}でわれる最初の数は ${L}。`}}},
+/* ---------- 6年 ---------- */
+{g:6,t:'分数のかけ算',m:'ブンスウマン',chat:[
+ [O,'分数のかけ算は、じつはかんたん。<span class="em">分子どうし、分母どうし</span>をかけるだけ！'],
+ [K,'<span class="big">2/3 × 3/4</span> なら、6/12？'],
+ [O,'そう。そして<span class="em">約分</span>すると？'],
+ [K,'<span class="em">1/2</span>！'],
+ [O,'計算のとちゅうで約分すると、数が小さくなって楽だよ。']],
+ gen(){const b=R(2,9),d=R(2,9),a=R(1,b-1),c=R(1,d-1);const s=fr(a*c,b*d);
+  return{q:`${a}/${b} × ${c}/${d} = ？`,a:s,o:opts(s,[fr(a*d,b*c),fr(a+c,b+d),fr(a*c+1,b*d),fr(a*c,b+d)],()=>fr(R(1,9),R(2,12))),x:`分子は ${a} × ${c} = ${a*c}、分母は ${b} × ${d} = ${b*d}。${a*c}/${b*d}${fr(a*c,b*d)!==`${a*c}/${b*d}`?` を約分して ${s}`:''}。`}}},
+{g:6,t:'分数のわり算',m:'ギャクスウ',chat:[
+ [K,'分数のわり算は？'],
+ [O,'<span class="em">わる数をひっくり返して（逆数にして）、かけ算</span>にするんだ。'],
+ [K,'<span class="big">3/4 ÷ 2/5</span> なら、3/4 × 5/2 …'],
+ [O,'そう！ 計算すると？'],
+ [K,'<span class="em">15/8</span>！ ひっくり返すのを忘れないようにしなきゃ。']],
+ gen(){const b=R(2,9),d=R(2,9),a=R(1,b-1),c=R(1,d-1);const s=fr(a*d,b*c);
+  return{q:`${a}/${b} ÷ ${c}/${d} = ？`,a:s,o:opts(s,[fr(a*c,b*d),fr(b*c,a*d),fr(a*d+1,b*c),fr(a+d,b+c)],()=>fr(R(1,15),R(2,12))),x:`${c}/${d} をひっくり返して ${d}/${c} をかける。${a}/${b} × ${d}/${c} = ${s}。`}}},
+{g:6,t:'比',m:'ヒーロー',chat:[
+ [O,'<span class="em">比</span>は「何対何」かを表すよ。12 : 18 を<span class="em">かんたんな比</span>にしてみよう。'],
+ [K,'どっちも6でわれるから… <span class="em">2 : 3</span>！'],
+ [O,'正解！ 両方を<span class="em">同じ数でわっても比は変わらない</span>んだ。'],
+ [K,'最大公約数でわれば、一回で終わるね！']],
+ gen(){let x,y;do{x=R(1,9);y=R(1,9)}while(x===y||gcd(x,y)!==1);const k=R(2,9),A=x*k,B=y*k;const s=`${x} : ${y}`;
+  return{q:`${A} : ${B} を<br>かんたんな比にすると？`,sm:true,a:s,small:true,o:opts(s,[`${y} : ${x}`,`${x+1} : ${y}`,`${x} : ${y+1}`,`${A-B>0?A-B:B-A} : ${k}`],()=>`${R(1,9)} : ${R(1,9)}`),x:`${A}と${B}は、どちらも${k}でわれるよ。${A}÷${k} = ${x}、${B}÷${k} = ${y}。`}}},
+{g:6,t:'速さ',m:'ハヤスギ',chat:[
+ [K,'速さ・時間・道のり、どれがどれかわからなくなる…'],
+ [O,'まず<span class="em">道のり = 速さ × 時間</span>。これだけおぼえよう。'],
+ [O,'時速40kmで3時間走ると？'],
+ [K,'40 × 3 = <span class="em">120km</span>！'],
+ [O,'速さを知りたいときは道のり ÷ 時間、時間を知りたいときは道のり ÷ 速さだよ。']],
+ gen(){const v=R(2,9)*10,h=R(2,5),d=v*h,t=R(0,2);
+  if(t===0)return{q:`時速${v}kmで${h}時間走ると、<br>道のりは何km？`,sm:true,small:true,a:`${d}km`,o:opts(`${d}km`,[`${v+h}km`,`${d+v}km`,`${d-v}km`],()=>`${d+pick([-1,1])*R(1,6)*10}km`),x:`道のり = 速さ × 時間。${v} × ${h} = ${d}km。`};
+  if(t===1)return{q:`${d}kmを${h}時間で走ると、<br>時速何km？`,sm:true,small:true,a:`時速${v}km`,o:opts(`時速${v}km`,[`時速${d*h}km`,`時速${v+10}km`,`時速${v-10}km`],()=>`時速${R(1,9)*10}km`),x:`速さ = 道のり ÷ 時間。${d} ÷ ${h} = ${v}。時速${v}km。`};
+  return{q:`${d}kmを時速${v}kmで走ると、<br>何時間かかる？`,sm:true,small:true,a:`${h}時間`,o:opts(`${h}時間`,[`${h+1}時間`,`${h-1}時間`,`${h+2}時間`],()=>`${R(1,9)}時間`),x:`時間 = 道のり ÷ 速さ。${d} ÷ ${v} = ${h}時間。`};}},
+];
+UNITS.forEach((u,i)=>{u.id=i;u.hue=(i*47)%360});
+const GRADE_COLOR=['','#0284c7','#db2777','#16a34a','#7c3aed','#ea580c','#0e7490'];
+const GRADE_SUB=['','たしざん・ひきざん','九九・2けた','わり算・かけ算','小数・がい数','分数・平均','分数・比・速さ'];
+
+/* ===================== イラスト（SVG） ===================== */
+function owlSVG(){return `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><ellipse cx="50" cy="60" rx="34" ry="36" fill="#a16207"/><ellipse cx="50" cy="66" rx="22" ry="26" fill="#fde68a"/>
+<path d="M18 30 L28 8 L38 28Z M82 30 L72 8 L62 28Z" fill="#a16207"/><circle cx="36" cy="42" r="14" fill="white"/><circle cx="64" cy="42" r="14" fill="white"/>
+<circle cx="38" cy="43" r="6" fill="#1c2b2a"/><circle cx="62" cy="43" r="6" fill="#1c2b2a"/><circle cx="40" cy="41" r="2" fill="white"/><circle cx="64" cy="41" r="2" fill="white"/>
+<path d="M45 52 L55 52 L50 60Z" fill="#f97316"/><circle cx="36" cy="42" r="15" fill="none" stroke="#1c2b2a" stroke-width="2.5"/><circle cx="64" cy="42" r="15" fill="none" stroke="#1c2b2a" stroke-width="2.5"/><path d="M51 42h-2" stroke="#1c2b2a" stroke-width="2.5"/></svg>`}
+function monSVG(u,shiny){
+  const h=u.hue,c1=`hsl(${h},75%,${shiny?68:62}%)`,c2=`hsl(${h},70%,${shiny?82:78}%)`,c3=`hsl(${h},60%,40%)`,v=u.id%4;
+  const body=[
+    `<path d="M50 12 C80 12 90 40 88 62 C86 84 70 92 50 92 C30 92 14 84 12 62 C10 40 20 12 50 12Z" fill="${c1}"/>`,
+    `<rect x="14" y="20" width="72" height="70" rx="26" fill="${c1}"/><path d="M26 22 L32 6 L40 22Z M60 22 L68 6 L74 22Z" fill="${c3}"/>`,
+    `<path d="M50 8 L90 86 Q50 98 10 86Z" fill="${c1}" stroke="${c1}" stroke-width="10" stroke-linejoin="round"/>`,
+    `<circle cx="50" cy="56" r="38" fill="${c1}"/><circle cx="22" cy="24" r="10" fill="${c1}"/><circle cx="78" cy="24" r="10" fill="${c1}"/><circle cx="22" cy="24" r="5" fill="${c2}"/><circle cx="78" cy="24" r="5" fill="${c2}"/>`][v];
+  const eyes=u.id%3===0?`<circle cx="50" cy="50" r="13" fill="white"/><circle cx="52" cy="51" r="6" fill="#1c2b2a"/><circle cx="54" cy="48" r="2" fill="white"/>`
+    :`<circle cx="38" cy="50" r="9" fill="white"/><circle cx="62" cy="50" r="9" fill="white"/><circle cx="39" cy="51" r="4.5" fill="#1c2b2a"/><circle cx="63" cy="51" r="4.5" fill="#1c2b2a"/><circle cx="40" cy="49" r="1.6" fill="white"/><circle cx="64" cy="49" r="1.6" fill="white"/>`;
+  const mouth=u.id%2?`<path d="M40 68 Q50 78 60 68" stroke="#1c2b2a" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M44 69 L46 74 L48 70Z" fill="white"/>`
+    :`<path d="M42 68 Q50 74 58 68" stroke="#1c2b2a" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+  const sym=['+','−','×','÷','%','=','<','√'][u.id%8];
+  const sparkle=shiny?`<path d="M84 10 l3 7 7 3 -7 3 -3 7 -3 -7 -7 -3 7 -3Z" fill="#fbbf24"/><path d="M14 74 l2 5 5 2 -5 2 -2 5 -2 -5 -5 -2 5 -2Z" fill="#fbbf24"/>`:'';
+  return `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">${body}<ellipse cx="50" cy="80" rx="18" ry="8" fill="${c2}"/>
+<circle cx="28" cy="64" r="5" fill="${c2}" opacity=".9"/><circle cx="72" cy="64" r="5" fill="${c2}" opacity=".9"/>${eyes}${mouth}
+<text x="50" y="88" text-anchor="middle" font-size="14" font-weight="900" fill="${c3}" font-family="sans-serif">${sym}</text>${sparkle}</svg>`;
+}
+
+/* ===================== 進みぐあい ===================== */
+let prog={};try{prog=JSON.parse(ls('sansu_progress_v1')||'{}')||{}}catch(e){prog={}}
+function save(){ls('sansu_progress_v1',JSON.stringify(prog))}
+const starsOf=id=>prog[id]||0;
+const totalStars=()=>UNITS.reduce((a,u)=>a+starsOf(u.id),0);
+function isOpen(u){const list=UNITS.filter(x=>x.g===u.g);const i=list.indexOf(u);return i===0||starsOf(list[i-1].id)>0}
+
+/* ===================== 画面切りかえ ===================== */
+function go(id){document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on',s.id===id));window.scrollTo(0,0);if(id==='sHome')renderHome()}
+function renderHome(){
+  document.getElementById('starTotal').textContent=totalStars();
+  document.getElementById('grades').innerHTML=[1,2,3,4,5,6].map(g=>{
+    const us=UNITS.filter(u=>u.g===g),st=us.reduce((a,u)=>a+starsOf(u.id),0);
+    return `<button class="grade" style="--gc:${GRADE_COLOR[g]}" onclick="openMap(${g})"><b>${g}</b><span>ねんせい</span><em>★ ${st} / ${us.length*3}</em></button>`}).join('');
+  const got=UNITS.filter(u=>starsOf(u.id)>0);
+  document.getElementById('zMini').innerHTML=(got.length?got.slice(-4):UNITS.slice(0,3)).map(u=>monSVG(u,starsOf(u.id)===3)).join('');
+  document.getElementById('zMini').style.filter=got.length?'':'brightness(0) opacity(.2)';
+  document.getElementById('zCount').textContent=`なかま ${got.length} / ${UNITS.length}`;
+  showTrialBanner();
+}
+let cur=null;
+function openMap(g){
+  cur={g};
+  const us=UNITS.filter(u=>u.g===g);
+  document.getElementById('mapTitle').textContent=`${g}ねんせい`;
+  document.getElementById('gradeStars').textContent=us.reduce((a,u)=>a+starsOf(u.id),0);
+  document.getElementById('path').innerHTML=us.map((u,i)=>{
+    const open=isOpen(u),s=starsOf(u.id);
+    return `<button class="stage ${open?'':'lock'}" onclick="${open?`openLesson(${u.id})`:`lockedMsg()`}">
+      <div class="mon">${open?monSVG(u,s===3):'<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="#e2e8f0"/><text x="50" y="62" text-anchor="middle" font-size="34" fill="#94a3b8">?</text></svg>'}</div>
+      <div><div class="no">ステージ ${i+1}</div><div class="ttl">${u.t}</div>
+      <div class="stars">${[1,2,3].map(n=>`<span class="${n<=s?'on':''}">★</span>`).join('')}</div></div></button>`}).join('');
+  go('sMap');
+}
+function lockedMsg(){beep('ng');alertBox('まだ ひらいていないよ','ひとつまえの ステージを クリアすると あそべるよ！')}
+
+/* ===================== おはなし（チャット） ===================== */
+let lineIdx=0;
+function openLesson(id){
+  if(!guard())return;
+  const u=UNITS[id];cur={g:u.g,u};lineIdx=0;
+  document.getElementById('lTitle').textContent=`${u.g}ねんせい ステージ ${UNITS.filter(x=>x.g===u.g).indexOf(u)+1}`;
+  document.getElementById('lH').textContent=u.t;
+  document.getElementById('chat').innerHTML='';
+  const nb=document.getElementById('lNext');nb.textContent='つぎへ ▶';nb.classList.remove('go');nb.onclick=nextLine;
+  document.getElementById('lSkip').style.display=starsOf(id)>0?'block':'none';
+  go('sLesson');nextLine();
+}
+function nextLine(){
+  const u=cur.u,chat=document.getElementById('chat');
+  if(lineIdx<u.chat.length){
+    const [who,txt]=u.chat[lineIdx++];
+    const row=document.createElement('div');row.className='row '+(who===O?'owlr':'kid');
+    row.innerHTML=`<div class="face ${who===O?'':'kidf'}">${who===O?owlSVG():'そら'}</div><div class="bub">${fmt(txt)}</div>`;
+    chat.appendChild(row);beep('tap');
+    row.scrollIntoView({behavior:'smooth',block:'end'});
+  }
+  if(lineIdx>=u.chat.length){const nb=document.getElementById('lNext');nb.textContent=`${u.m}と バトル！ ⚔️`;nb.classList.add('go');nb.onclick=startBattle}
+}
+
+/* ===================== バトル ===================== */
+const QN=8,LIVES=3;let B=null;
+function startBattle(){
+  if(!guard())return;
+  const u=cur.u;B={u,i:0,miss:0,lives:LIVES,busy:false};
+  document.getElementById('bName').textContent=u.m;
+  const m=document.getElementById('monster');m.className='monster';m.innerHTML=monSVG(u,false);
+  go('sBattle');nextQ();
+}
+function drawStatus(){
+  document.getElementById('hearts').innerHTML='❤️'.repeat(B.lives)+'<span style="opacity:.25">❤️</span>'.repeat(LIVES-B.lives);
+  document.getElementById('hpBar').style.width=((QN-B.i)/QN*100)+'%';
+  document.getElementById('qCount').textContent=`${Math.min(B.i+1,QN)} / ${QN}もん`;
+}
+function nextQ(){
+  if(B.i>=QN)return win();
+  let p,tries=0;do{p=B.u.gen()}while((p.q===B.lastQ)&&tries++<10);B.lastQ=p.q;B.p=p;B.busy=false;
+  drawStatus();
+  document.getElementById('q').innerHTML=`<div class="qm ${p.sm?'sm':''}">${fmt(p.q)}</div>`;
+  document.getElementById('opts').innerHTML=p.o.map(o=>`<button class="opt ${p.small?'sm':''}" data-v="${o}">${fmt(o)}</button>`).join('');
+  document.querySelectorAll('.opt').forEach(b=>b.onclick=()=>answer(b));
+  const fb=document.getElementById('fb');fb.className='fb';fb.innerHTML='';
+}
+function pow(t){const a=document.getElementById('arena'),e=document.createElement('div');e.className='pow';e.textContent=t;a.appendChild(e);setTimeout(()=>e.remove(),700)}
+function answer(btn){
+  if(B.busy)return;B.busy=true;
+  const ok=btn.dataset.v===String(B.p.a);
+  document.querySelectorAll('.opt').forEach(b=>{b.disabled=true;if(b.dataset.v===String(B.p.a))b.classList.add('ok')});
+  const m=document.getElementById('monster'),fb=document.getElementById('fb');
+  if(ok){
+    beep('ok');B.i++;m.classList.remove('hit');void m.offsetWidth;m.classList.add('hit');pow(pick(['ドーン！','バシッ！','ズバッ！','やった！']));drawStatus();
+    setTimeout(()=>{B.i>=QN?win():nextQ()},750);
+  }else{
+    beep('ng');btn.classList.add('ng');B.miss++;B.lives--;m.classList.remove('atk');void m.offsetWidth;m.classList.add('atk');drawStatus();
+    fb.className='fb bad show';
+    fb.innerHTML=`<b>おしい！ こたえは ${fmt(B.p.a)}</b><br>${fmt(B.p.x)}<button class="next" onclick="${B.lives<=0?'lose()':'nextQ()'}">${B.lives<=0?'けっかを見る':'つぎの もんだい ▶'}</button>`;
+    fb.scrollIntoView({behavior:'smooth',block:'nearest'});
+  }
+}
+function win(){
+  const m=document.getElementById('monster');m.classList.add('gone');beep('win');
+  const u=B.u,stars=B.miss===0?3:B.miss===1?2:1,before=starsOf(u.id);
+  if(stars>before){prog[u.id]=stars;save()}
+  const firstFriend=before===0,newShiny=stars===3&&before<3;
+  setTimeout(()=>{
+    confetti();
+    const list=UNITS.filter(x=>x.g===u.g),idx=list.indexOf(u),nxt=list[idx+1];
+    document.getElementById('result').innerHTML=`
+      <div style="font-size:15px;color:var(--teal)">${u.t}</div>
+      <h2>${stars===3?'パーフェクト！':'クリア！'}</h2>
+      <div class="bigstars">${[1,2,3].map(n=>`<span class="${n<=stars?'on':''}" style="animation-delay:${n*.18}s">★</span>`).join('')}</div>
+      ${firstFriend||newShiny?`<div class="newfriend">${monSVG(u,stars===3)}<div><b>${u.m}${newShiny&&!firstFriend?'が キラキラに！':'が なかまになった！'}</b><small>${stars===3?'ノーミスで キラキラのすがたに！':'ノーミスで クリアすると キラキラのすがたになるよ。'}なかまずかんで 見てみよう。</small></div></div>`:''}
+      ${nxt?`<button class="next go" onclick="openLesson(${nxt.id})">つぎのステージへ ▶</button>`:`<button class="next go" onclick="openMap(${u.g})">${u.g}ねんせい コンプリート！</button>`}
+      ${stars<3?`<button class="btn2" onclick="startBattle()">もういちど（★3をめざす）</button>`:''}
+      <button class="btn2" onclick="openMap(${u.g})">ステージいちらんへ</button>`;
+    go('sResult');
+  },650);
+}
+function lose(){
+  document.getElementById('result').innerHTML=`
+    <div style="width:110px;margin:0 auto">${owlSVG()}</div>
+    <h2>ざんねん…！</h2>
+    <p style="font-size:15.5px;line-height:1.8;color:#44403c;margin:10px 0 16px;font-weight:500">まちがえた もんだいは、もう<br>おぼえたはず！ もういちど やってみよう。</p>
+    <button class="next go" onclick="startBattle()">もういちど バトル</button>
+    <button class="btn2" onclick="openLesson(${B.u.id})">ホー先生の おはなしを 見なおす</button>
+    <button class="btn2" onclick="openMap(${B.u.g})">ステージいちらんへ</button>`;
+  go('sResult');
+}
+function confirmQuit(){return B&&B.i===0?true:window.confirm('バトルを やめる？（ここまでの けっかは のこらないよ）')}
+function confetti(){
+  const cs=['#fbbf24','#5eead4','#f472b6','#60a5fa','#fb923c'];
+  for(let i=0;i<40;i++){const c=document.createElement('div');c.className='confetti';c.style.left=Math.random()*100+'vw';c.style.background=pick(cs);
+    c.style.animationDuration=(1.6+Math.random()*1.6)+'s';c.style.animationDelay=Math.random()*.4+'s';document.body.appendChild(c);setTimeout(()=>c.remove(),3800)}
+}
+
+/* ===================== ずかん ===================== */
+function showZukan(){
+  const got=UNITS.filter(u=>starsOf(u.id)>0).length;
+  document.getElementById('zPill').textContent=`${got} / ${UNITS.length}`;
+  document.getElementById('zgrid').innerHTML=UNITS.map(u=>{const s=starsOf(u.id);
+    return `<div class="zc ${s?'':'no'} ${s===3?'shiny':''}">${monSVG(u,s===3)}<span class="zn">${s?u.m:'？？？'}</span><span style="color:var(--gray);font-size:11px">${u.g}年</span></div>`}).join('');
+  go('sZukan');
+}
+
+/* ===================== 起動 ===================== */
+document.getElementById('heroOwl').innerHTML=owlSVG();
+document.getElementById('ovOwl').innerHTML=owlSVG();
+document.getElementById('soundBtn').textContent=soundOn?'🔊':'🔈';
+trialStart();renderHome();
+if(window.__justPaid)alertBox('ご購入ありがとうございます！','すべてのステージで、ずっと遊べるようになりました。');
+else if(trialOver())openBuy(true);
+</script>
+</body>
+</html>
